@@ -50,11 +50,8 @@ This Django web application implements a hybrid predictive system for stock mark
 ### Running the Application
 
 ```
-python manage.py migrate
-python manage.py runserver
+python app.py
 ```
-
-The application will be available at http://127.0.0.1:8000/
 
 ## Usage
 
