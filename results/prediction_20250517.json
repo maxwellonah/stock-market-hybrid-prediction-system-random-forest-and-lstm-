@@ -1,0 +1,15 @@
+{
+    "date": "2025-05-17",
+    "current_price": 152.75,
+    "prediction": 61.31140754377169,
+    "change_pct": -59.8615989893475,
+    "confidence_interval": [
+        56.85194212599809,
+        65.7708729615453
+    ],
+    "market_regime": "High volatility downtrend",
+    "model_weights": [
+        0.4649543212634531,
+        0.535045678736547
+    ]
+}

@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Hybrid Stock Prediction System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="jumbotron bg-light p-4 rounded">
+            <h1 class="display-5">Hybrid Stock Prediction System</h1>
+            <p class="lead">Combining Random Forest (Daily) and LSTM (Monthly) predictions</p>
+        </div>
+    </div>
+</div>
+
+<!-- Status indicators -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">System Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="alert alert-info status-indicator">
+                            Random Forest: {% if request.session.rf_model_id %}Trained{% else %}Ready{% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="alert alert-info status-indicator">
+                            LSTM: {% if request.session.lstm_model_id %}Trained{% else %}Ready{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Data Source Tabs -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Data Source</h5>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-tabs" id="dataSourceTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="polygon-tab" data-bs-toggle="tab" data-bs-target="#polygon" type="button" role="tab">Polygon API</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload" type="button" role="tab">Upload Data</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="live-tab" data-bs-toggle="tab" data-bs-target="#live" type="button" role="tab">Live Prediction</button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="dataSourceTabsContent">
+                    <div class="tab-pane fade show active" id="polygon" role="tabpanel">
+                        <form method="post" action="{% url 'fetch_stock_data' %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="{{ symbol_form.stock_symbol.id_for_label }}" class="form-label">Select a stock to analyze:</label>
+                                {% bootstrap_field symbol_form.stock_symbol show_label=False %}
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ symbol_form.start_date.id_for_label }}" class="form-label">Start Date:</label>
+                                        {% bootstrap_field symbol_form.start_date show_label=False %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ symbol_form.end_date.id_for_label }}" class="form-label">End Date:</label>
+                                        {% bootstrap_field symbol_form.end_date show_label=False %}
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Fetch Data</button>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="upload" role="tabpanel">
+                        <form method="post" action="{% url 'upload_stock_data' %}" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="{{ upload_form.name.id_for_label }}" class="form-label">Name:</label>
+                                {% bootstrap_field upload_form.name show_label=False %}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ upload_form.file.id_for_label }}" class="form-label">CSV File:</label>
+                                {% bootstrap_field upload_form.file show_label=False %}
+                                <small class="form-text text-muted">Upload a CSV file with columns: Date, Open, High, Low, Close, Volume</small>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Upload Data</button>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="live" role="tabpanel">
+                        <div class="alert alert-info mb-3">
+                            <i class="bi bi-info-circle"></i> This feature uses the latest market data from Polygon API to make real-time predictions without requiring historical data upload.
+                        </div>
+                        <form method="post" action="{% url 'live_prediction' %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="{{ symbol_form.stock_symbol.id_for_label }}" class="form-label">Select a stock for live prediction:</label>
+                                {% bootstrap_field symbol_form.stock_symbol show_label=False %}
+                            </div>
+                            <button type="submit" class="btn btn-success">Make Live Prediction</button>
+                        </form>
+                        <div class="mt-3">
+                            <small class="text-muted">Note: You must have previously trained models for the selected stock to use this feature.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if stock_data %}
+<!-- Data Info -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Data Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <p><strong>Stock:</strong> {{ stock_data.ticker }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <p><strong>Date Range:</strong> {{ stock_data.data_range }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <p><strong>Records:</strong> {{ stock_data.records }}</p>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <form method="post" action="{% url 'train_models' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success w-100">Train Models</button>
+                        </form>
+                    </div>
+                    <div class="col-md-6">
+                        <form method="post" action="{% url 'make_predictions' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary w-100" {% if not request.session.rf_model_id or not request.session.lstm_model_id %}disabled{% endif %}>
+                                Make Predictions
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Price Chart -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Price Chart</h5>
+            </div>
+            <div class="card-body">
+                {{ price_chart|safe }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Technical Indicators -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Technical Indicators</h5>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-tabs" id="indicatorTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="ma-tab" data-bs-toggle="tab" data-bs-target="#ma" type="button" role="tab">Moving Averages</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="rsi-tab" data-bs-toggle="tab" data-bs-target="#rsi" type="button" role="tab">RSI</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="macd-tab" data-bs-toggle="tab" data-bs-target="#macd" type="button" role="tab">MACD</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="bollinger-tab" data-bs-toggle="tab" data-bs-target="#bollinger" type="button" role="tab">Bollinger Bands</button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="indicatorTabsContent">
+                    <div class="tab-pane fade show active" id="ma" role="tabpanel">
+                        {{ ma_chart|safe }}
+                    </div>
+                    <div class="tab-pane fade" id="rsi" role="tabpanel">
+                        {{ rsi_chart|safe }}
+                    </div>
+                    <div class="tab-pane fade" id="macd" role="tabpanel">
+                        {{ macd_chart|safe }}
+                    </div>
+                    <div class="tab-pane fade" id="bollinger" role="tabpanel">
+                        {{ bollinger_chart|safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+{% endblock %}

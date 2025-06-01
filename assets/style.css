@@ -1,0 +1,74 @@
+/* Custom styles for the Hybrid Stock Prediction System */
+
+/* Status indicators */
+#rf-status, #lstm-status {
+    font-weight: bold;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+/* Upload area */
+.upload-area {
+    border: 2px dashed #cccccc;
+    border-radius: 5px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.upload-area:hover {
+    border-color: #007bff;
+}
+
+/* Prediction results */
+.prediction-positive {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.prediction-negative {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Loading spinner */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: #007bff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Custom cards */
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Footer */
+footer {
+    margin-top: 30px;
+    padding: 20px 0;
+    border-top: 1px solid #eee;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 20px;
+    }
+}
